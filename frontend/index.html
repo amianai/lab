@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chatbot Bastian Contrario</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        background: #f7f7f7;
+      }
+      .card {
+        background: #fff;
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        max-width: 700px;
+      }
+      label {
+        display: block;
+        margin-top: 12px;
+        font-weight: bold;
+      }
+      textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 8px;
+        font-size: 14px;
+      }
+      .controls {
+        margin-top: 12px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      button {
+        padding: 8px 16px;
+        background: #2d6cdf;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #999;
+      }
+      .output {
+        margin-top: 16px;
+        padding: 12px;
+        background: #f0f0f0;
+        border-radius: 6px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Chatbot Bastian Contrario</h1>
+      <p>Scrivi qualcosa e il bot risponderà sempre in disaccordo.</p>
+
+      <label for="userText">Testo</label>
+      <textarea id="userText" placeholder="Scrivi qui..."></textarea>
+
+      <label for="temp">Temperatura: <span id="tempValue">0.8</span></label>
+      <input id="temp" type="range" min="0.1" max="1.5" step="0.1" value="0.8" />
+
+      <div class="controls">
+        <button id="sendBtn">Litiga con me</button>
+        <span id="status"></span>
+      </div>
+
+      <div class="output" id="output">Risposta del bot...</div>
+    </div>
+
+    <script>
+      const userText = document.getElementById('userText');
+      const temp = document.getElementById('temp');
+      const tempValue = document.getElementById('tempValue');
+      const sendBtn = document.getElementById('sendBtn');
+      const output = document.getElementById('output');
+      const status = document.getElementById('status');
+
+      temp.addEventListener('input', () => {
+        tempValue.textContent = temp.value;
+      });
+
+      sendBtn.addEventListener('click', async () => {
+        const text = userText.value.trim();
+        if (!text) {
+          output.textContent = 'Inserisci un testo prima di inviare.';
+          return;
+        }
+
+        sendBtn.disabled = true;
+        status.textContent = 'Attendere...';
+
+        try {
+          const response = await fetch('http://localhost:8000/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, temperature: parseFloat(temp.value) })
+          });
+          const data = await response.json();
+          if (response.ok) {
+            output.textContent = data.response;
+          } else {
+            output.textContent = data.detail || 'Errore nella risposta.';
+          }
+        } catch (err) {
+          output.textContent = String(err);
+        } finally {
+          sendBtn.disabled = false;
+          status.textContent = '';
+        }
+      });
+    </script>
+  </body>
+</html>
